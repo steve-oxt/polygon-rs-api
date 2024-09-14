@@ -400,6 +400,11 @@ pub trait Request {
         }
     }
 
+    fn return_parsed_string(pattern: String, data: &String) -> String {
+        let key_value_pair = Regex::new(&pattern).unwrap().find(&data).unwrap().as_str();
+        Regex::new(":(.*?)$").unwrap().find(&key_value_pair).unwrap().as_str().replace(":", "").replace("\"", "").replace("}","").replace(",","").to_string()
+    }
+
     fn polygon_request(&mut self) -> Result<Value, ErrorCode> {
         if let Err(check) = self.set_url() {
             return Err(check);

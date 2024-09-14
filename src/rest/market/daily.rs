@@ -6,9 +6,11 @@ pub struct Attribute {
     pub name: &'static str,
 }
 
-#[derive(serde::Deserialize, Clone, Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, Default)]
 pub struct Daily {
+    #[serde(skip_serializing)]
     daily_parameters: Parameters,
+    #[serde(skip_serializing)]
     daily_url: String,
     pub after_hours: f64,
     pub close: f64,
@@ -24,34 +26,34 @@ pub struct Daily {
 
 impl Daily {
     const ATTRIBUTES: &'static [&'static Attribute] = &[&Attribute {
-        regex: "\"(status)\":(\\\".*?\\\")",
+        regex: "\"(status)\":(.*?)(,|})",
         name: "status",
     }, &Attribute {
-        regex: "\"(symbol)\":(\\\".*?\\\")",
+        regex: "\"(symbol)\":(.*?)(,|})",
         name: "symbol",
     }, &Attribute {
-        regex: "\"(afterHours)\":(\\\".*?\\\")",
+        regex: "\"(afterHours)\":(.*?)(,|})",
         name: "after_hours",
     },&Attribute {
-        regex: "\"(close)\":(\\\".*?\\\")",
+        regex: "\"(close)\":(.*?)(,|})",
         name: "close",
     },&Attribute {
-        regex: "\"(from)\":(\\\".*?\\\")",
+        regex: "\"(from)\":(.*?)(,|})",
         name: "from",
     },&Attribute {
-        regex: "\"(high)\":(\\\".*?\\\")",
+        regex: "\"(high)\":(.*?)(,|})",
         name: "high",
     },&Attribute {
-        regex: "\"(low)\":(\\\".*?\\\")",
+        regex: "\"(low)\":(.*?)(,|})",
         name: "low",
     },&Attribute {
-        regex: "\"(open)\":(\\\".*?\\\")",
+        regex: "\"(open)\":(.*?)(,|})",
         name: "open",
     },&Attribute {
-        regex: "\"(preMarket)\":(\\\".*?\\\")",
+        regex: "\"(preMarket)\":(.*?)(,|})",
         name: "pre_market",
     },&Attribute {
-        regex: "\"(volume)\":(\\\".*?\\\")",
+        regex: "\"(volume)\":(.*?)(,|})",
         name: "volume",
     },];
     pub fn set_parameters(
@@ -69,6 +71,12 @@ impl Daily {
             ..Parameters::default()
         }
     }
+
+    /*pub fn return_parsed_string(pattern: String, data: String) -> String {
+        let key_value_pair = Regex::new(&pattern).unwrap().find(&data).unwrap().as_str();
+        Regex::new(":(.*?)$").unwrap().find(&key_value_pair).unwrap().as_str().replace(":", "").replace("\"", "").to_string()
+    }*/
+
 }
 
 
@@ -90,6 +98,8 @@ impl Request for Daily {
             parameter: Parameter::Adjusted,
         },
     ];
+
+    
 
     fn parameters(&self) -> &Parameters {
         &self.daily_parameters
@@ -127,18 +137,18 @@ impl Request for Daily {
         };
         
         for a in Self::ATTRIBUTES {
-            let v = Regex::new(a.regex).unwrap().find(&res).unwrap().as_str();
+            //let v = Regex::new(a.regex).unwrap().find(&res).unwrap().as_str();
             match a.name {
-                "status" => self.status = Regex::new("(?<=:\").*?(?=\")").unwrap().find(&v).unwrap().as_str().to_string(),
-                "symbol" => self.symbol = v.to_string(),
-                "after_hours" => self.after_hours = v.parse::<f64>().unwrap(),
-                "close" => self.close = v.parse::<f64>().unwrap(),
-                "from" => self.from = v.to_string(),
-                "high" => self.high = v.parse::<f64>().unwrap(),
-                "low" => self.low = v.parse::<f64>().unwrap(),
-                "open" => self.open = v.parse::<f64>().unwrap(),
-                "pre_market" => self.pre_market = v.parse::<f64>().unwrap(),
-                "volume" => self.volume = v.parse::<f64>().unwrap(),
+                "status" => self.status = Daily::return_parsed_string(a.regex.to_string(), &res),
+                "symbol" => self.symbol = Daily::return_parsed_string(a.regex.to_string(), &res),
+                "after_hours" => self.after_hours = Daily::return_parsed_string(a.regex.to_string(), &res).parse::<f64>().unwrap(),
+                "close" => self.close = Daily::return_parsed_string(a.regex.to_string(), &res).parse::<f64>().unwrap(),
+                "from" => self.from = Daily::return_parsed_string(a.regex.to_string(), &res).to_string(),
+                "high" => self.high = Daily::return_parsed_string(a.regex.to_string(), &res).parse::<f64>().unwrap(),
+                "low" => self.low = Daily::return_parsed_string(a.regex.to_string(), &res).parse::<f64>().unwrap(),
+                "open" => self.open = Daily::return_parsed_string(a.regex.to_string(), &res).parse::<f64>().unwrap(),
+                "pre_market" => self.pre_market = Daily::return_parsed_string(a.regex.to_string(), &res).parse::<f64>().unwrap(),
+                "volume" => self.volume = Daily::return_parsed_string(a.regex.to_string(), &res).parse::<f64>().unwrap(),
                 _ => ()
             }
         }
