@@ -418,5 +418,16 @@ pub trait Request {
         Ok(v)
     }
 
+    fn polygon_request_string(&mut self) -> Result<String, ErrorCode> {
+        if let Err(check) = self.set_url() {
+            return Err(check);
+        }
+        let r = match self.get_raw_data() {
+            Ok(response) => response,
+            Err(e) => return Err(e),
+        };
+        Ok(r)
+    }
+
     fn request(&mut self) -> Result<(), ErrorCode>;
 }

@@ -1,6 +1,12 @@
 use crate::{ErrorCode, Parameter, ParameterRequirment, Parameters, Request};
+use crate::rest::Regex;
 
-#[derive(serde::Deserialize,Clone, Debug, Default)]
+pub struct Attribute {
+    pub regex: &'static str,
+    pub name: &'static str,
+}
+
+#[derive(serde::Deserialize, Clone, Debug, Default)]
 pub struct Daily {
     daily_parameters: Parameters,
     daily_url: String,
@@ -17,6 +23,37 @@ pub struct Daily {
 }
 
 impl Daily {
+    const ATTRIBUTES: &'static [&'static Attribute] = &[&Attribute {
+        regex: "\"(status)\":(\\\".*?\\\")",
+        name: "status",
+    }, &Attribute {
+        regex: "\"(symbol)\":(\\\".*?\\\")",
+        name: "symbol",
+    }, &Attribute {
+        regex: "\"(afterHours)\":(\\\".*?\\\")",
+        name: "after_hours",
+    },&Attribute {
+        regex: "\"(close)\":(\\\".*?\\\")",
+        name: "close",
+    },&Attribute {
+        regex: "\"(from)\":(\\\".*?\\\")",
+        name: "from",
+    },&Attribute {
+        regex: "\"(high)\":(\\\".*?\\\")",
+        name: "high",
+    },&Attribute {
+        regex: "\"(low)\":(\\\".*?\\\")",
+        name: "low",
+    },&Attribute {
+        regex: "\"(open)\":(\\\".*?\\\")",
+        name: "open",
+    },&Attribute {
+        regex: "\"(preMarket)\":(\\\".*?\\\")",
+        name: "pre_market",
+    },&Attribute {
+        regex: "\"(volume)\":(\\\".*?\\\")",
+        name: "volume",
+    },];
     pub fn set_parameters(
         &mut self,
         api_key: String,
@@ -33,6 +70,8 @@ impl Daily {
         }
     }
 }
+
+
 
 impl Request for Daily {
     const VERSION: &'static str = "v1";
@@ -82,7 +121,28 @@ impl Request for Daily {
     }
 
     fn request(&mut self) -> Result<(), ErrorCode> {
-        match self.polygon_request() {
+        let res = match self.polygon_request_string() {
+            Ok(response) => response,
+            Err(e) => return Err(e),
+        };
+        
+        for a in Self::ATTRIBUTES {
+            let v = Regex::new(a.regex).unwrap().find(&res).unwrap().as_str();
+            match a.name {
+                "status" => self.status = Regex::new("(?<=:\").*?(?=\")").unwrap().find(&v).unwrap().as_str().to_string(),
+                "symbol" => self.symbol = v.to_string(),
+                "after_hours" => self.after_hours = v.parse::<f64>().unwrap(),
+                "close" => self.close = v.parse::<f64>().unwrap(),
+                "from" => self.from = v.to_string(),
+                "high" => self.high = v.parse::<f64>().unwrap(),
+                "low" => self.low = v.parse::<f64>().unwrap(),
+                "open" => self.open = v.parse::<f64>().unwrap(),
+                "pre_market" => self.pre_market = v.parse::<f64>().unwrap(),
+                "volume" => self.volume = v.parse::<f64>().unwrap(),
+                _ => ()
+            }
+        }
+        /*match self.polygon_request() {
             Ok(response) => {
                 if let Some(after_hours) = response["afterHours"].as_f64() {
                     self.after_hours = after_hours
@@ -116,7 +176,7 @@ impl Request for Daily {
                 }
             }
             Err(e) => return Err(e),
-        };
+        };*/
 
         Ok(())
     }

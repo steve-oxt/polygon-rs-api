@@ -4,7 +4,9 @@ use crate::{
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug, Default)]
 pub struct Chain {
+    #[serde(skip_serializing)]
     chain_parameters: Parameters,
+    #[serde(skip_serializing)]
     chain_url: String,
     pub request_id: String,
     pub next_url: String,
