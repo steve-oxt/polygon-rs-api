@@ -6,7 +6,6 @@ pub mod reference;
 use crate::ErrorCode;
 use crate::{Parameter, ParameterRequirment, Parameters};
 use regex::Regex;
-//use reqwest::redirect;
 use serde_json::Value;
 
 #[derive(serde::Deserialize)]
@@ -377,7 +376,6 @@ pub trait Request {
                         return Err(check);
                     }
                 }
-                
             }
         }
         Ok(())
@@ -400,9 +398,56 @@ pub trait Request {
         }
     }
 
-    fn return_parsed_string(pattern: String, data: &String) -> String {
+    fn return_parsed_string(&self, pattern: String, data: &String) -> String {
         let key_value_pair = Regex::new(&pattern).unwrap().find(&data).unwrap().as_str();
-        Regex::new(":(.*?)$").unwrap().find(&key_value_pair).unwrap().as_str().replace(":", "").replace("\"", "").replace("}","").replace(",","").to_string()
+        let extracted_value = Regex::new(":(.*?)$")
+            .unwrap()
+            .find(&key_value_pair)
+            .unwrap()
+            .as_str();
+        let striped_value = Regex::new("[\\w.]")
+            .unwrap()
+            .find(&extracted_value)
+            .unwrap()
+            .as_str();
+        striped_value.to_string()
+        //Regex::new(":(.*?)$").unwrap().find(&key_value_pair).unwrap().as_str().replace(":", "").replace("\"", "").replace("}","").replace(",","").to_string()
+    }
+
+    fn return_parsed_number(&self, pattern: String, data: &String) -> f64 {
+        let key_value_pair = Regex::new(&pattern).unwrap().find(&data).unwrap().as_str();
+        let extracted_value = Regex::new(":(.*?)$")
+            .unwrap()
+            .find(&key_value_pair)
+            .unwrap()
+            .as_str();
+        let striped_value = Regex::new("[\\w.]")
+            .unwrap()
+            .find(&extracted_value)
+            .unwrap()
+            .as_str();
+        striped_value.parse::<f64>().unwrap()
+        //(Regex::new(":(.*?)$").unwrap().find(&key_value_pair).unwrap().as_str().replace(":", "").replace("\"", "").replace("}","").replace(",","").to_string()).parse::<f64>().unwrap()
+    }
+
+    fn return_parsed_integer(&self, pattern: String, data: &String) -> i64 {
+        let key_value_pair = Regex::new(&pattern).unwrap().find(&data).unwrap().as_str();
+        let extracted_value = Regex::new(":(.*?)$")
+            .unwrap()
+            .find(&key_value_pair)
+            .unwrap()
+            .as_str();
+        let striped_value = Regex::new("[\\w.]")
+            .unwrap()
+            .find(&extracted_value)
+            .unwrap()
+            .as_str();
+        striped_value.parse::<i64>().unwrap()
+        //(Regex::new(":(.*?)$").unwrap().find(&key_value_pair).unwrap().as_str().replace(":", "").replace("\"", "").replace("}","").replace(",","").to_string()).parse::<i64>().unwrap()
+    }
+
+    fn return_parsed_array(_pattern: String, _data: &String) -> String {
+        String::from("")
     }
 
     fn polygon_request(&mut self) -> Result<Value, ErrorCode> {
@@ -427,11 +472,10 @@ pub trait Request {
         if let Err(check) = self.set_url() {
             return Err(check);
         }
-        let r = match self.get_raw_data() {
-            Ok(response) => response,
+        match self.get_raw_data() {
+            Ok(response) => Ok(response),
             Err(e) => return Err(e),
-        };
-        Ok(r)
+        }
     }
 
     fn request(&mut self) -> Result<(), ErrorCode>;
