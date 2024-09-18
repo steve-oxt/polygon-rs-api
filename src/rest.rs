@@ -3,10 +3,13 @@ pub mod market;
 pub mod parameters;
 pub mod reference;
 
+use std::collections::HashMap;
+
 use crate::ErrorCode;
 use crate::{Parameter, ParameterRequirment, Parameters};
 use regex::Regex;
 use serde_json::Value;
+use std::sync::OnceLock;
 
 #[derive(serde::Deserialize)]
 pub enum Rest {
@@ -18,6 +21,25 @@ pub trait Request {
     const VERSION: &'static str;
     const CALL: &'static str;
     const PARAMETERS: &'static [&'static ParameterRequirment];
+    
+    fn hashma() {//-> HashMap<&'static Parameter, Box<dyn for<'a> Fn(&'a Self, bool) -> Result<(), ErrorCode>>> {
+        let mut hm: HashMap<&Parameter, Box<dyn for<'a> Fn(&'a _, bool) -> Result<(), ErrorCode>>> = HashMap::new();
+        hm.insert(&Parameter::Ticker, Box::new(Self::verify_ticker));
+            //let mut m: HashMap<&'static Parameter, Box<dyn for<'a> Fn(&'a Self, bool) -> Result<(), ErrorCode>>> = HashMap::new();
+            //m.insert(&Parameter::Ticker, Box::new(Self::verify_ticker));
+        hm
+        
+    }
+
+    fn hashmap() -> &'static HashMap<&Parameter, Box<dyn for<'a> Fn(&'a &Self, bool) -> Result<(), ErrorCode>>> {
+        static HASHMAP: OnceLock<HashMap<&Parameter, Box<dyn for<'a> Fn(self, bool) -> Result<(), ErrorCode>>>> = OnceLock::new();
+        
+        HASHMAP.get_or_init(|| {
+            let mut m = HashMap::new();
+            m.insert(&Parameter::Ticker, Box::new(Self::verify_ticker));
+            m
+        })
+    }
 
     fn parameters(&self) -> &Parameters;
 
@@ -294,7 +316,12 @@ pub trait Request {
         if let Err(check) = self.verify_api_key() {
             return Err(check);
         }
+        let mut hm: HashMap<&Parameter, Box<dyn for<'a> Fn(&'a _, bool) -> Result<(), ErrorCode>>> = HashMap::new();
+            hm.insert(&Parameter::Ticker, Box::new(Self::verify_ticker));
         for parameter in Self::PARAMETERS {
+            if let Err(check) = hm.get(&parameter.parameter).unwrap()(self, parameter.required) {
+                return Err(check);
+            }
             match parameter.parameter {
                 Parameter::Ticker => {
                     if let Err(check) = self.verify_ticker(parameter.required) {

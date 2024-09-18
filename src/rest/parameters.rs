@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Parameter {
-    Ticker,
+    Ticker(String),
     Date,
     Adjusted,
     Sort,
@@ -25,6 +25,13 @@ pub enum Parameter {
 pub struct ParameterRequirment {
     pub required: bool,
     pub parameter: Parameter,
+   
+}
+
+impl ParameterRequirment {
+    pub fn verify(&self) {
+
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

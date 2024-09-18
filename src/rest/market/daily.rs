@@ -27,6 +27,7 @@ impl Daily {
         &Attribute {
             regex: "\"(status)\":(.*?)(,|})",
             name: "status",
+            func: Box::new(Self::verify_ticker),
         },
         &Attribute {
             regex: "\"(symbol)\":(.*?)(,|})",

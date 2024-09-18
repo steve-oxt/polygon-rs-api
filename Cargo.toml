@@ -1,6 +1,6 @@
 [package]
 name = "polygon_rs_api"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2021"
 authors = ["stephen-cameron <git@oxt.ca>"]
 description = "Unofficial Library for interacting with the polygon.io api"
