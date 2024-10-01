@@ -3,18 +3,10 @@ pub mod market;
 pub mod parameters;
 pub mod reference;
 
-use std::collections::HashMap;
-
 use crate::ErrorCode;
 use crate::{Parameter, ParameterRequirment, Parameters};
 use regex::Regex;
 use serde_json::Value;
-use std::sync::OnceLock;
-
-#[derive(serde::Deserialize)]
-pub enum Rest {
-    Market(market::Market),
-}
 
 pub trait Request {
     const BASE_URL: &'static str = "https://api.polygon.io";
@@ -22,25 +14,6 @@ pub trait Request {
     const CALL: &'static str;
     const PARAMETERS: &'static [&'static ParameterRequirment];
     
-    fn hashma() {//-> HashMap<&'static Parameter, Box<dyn for<'a> Fn(&'a Self, bool) -> Result<(), ErrorCode>>> {
-        let mut hm: HashMap<&Parameter, Box<dyn for<'a> Fn(&'a _, bool) -> Result<(), ErrorCode>>> = HashMap::new();
-        hm.insert(&Parameter::Ticker, Box::new(Self::verify_ticker));
-            //let mut m: HashMap<&'static Parameter, Box<dyn for<'a> Fn(&'a Self, bool) -> Result<(), ErrorCode>>> = HashMap::new();
-            //m.insert(&Parameter::Ticker, Box::new(Self::verify_ticker));
-        hm
-        
-    }
-
-    fn hashmap() -> &'static HashMap<&Parameter, Box<dyn for<'a> Fn(&'a &Self, bool) -> Result<(), ErrorCode>>> {
-        static HASHMAP: OnceLock<HashMap<&Parameter, Box<dyn for<'a> Fn(self, bool) -> Result<(), ErrorCode>>>> = OnceLock::new();
-        
-        HASHMAP.get_or_init(|| {
-            let mut m = HashMap::new();
-            m.insert(&Parameter::Ticker, Box::new(Self::verify_ticker));
-            m
-        })
-    }
-
     fn parameters(&self) -> &Parameters;
 
     fn url(&mut self) -> &String;
@@ -312,15 +285,56 @@ pub trait Request {
         }
     }
 
+    fn get_parameter<T>(&self, parameter: Parameter) -> Option<T>  {
+        let o = match parameter {
+            Parameter::Ticker => &self.parameters().ticker,
+            Parameter::Date => &self.parameters().date,
+            Parameter::From => &self.parameters().from,
+            Parameter::To => &self.parameters().to,
+            Parameter::OptionsTicker => &self.parameters().ticker,
+            Parameter::Timestamp => &self.parameters().timestamp,
+            Parameter::Adjusted => &self.parameters().adjusted,
+            Parameter::Sort => &self.parameters().sort,
+            Parameter::Limit => &self.parameters().limit,
+            Parameter::Timespan => &self.parameters().timespan,
+            Parameter::Multiplier => &self.parameters().multiplier,
+            Parameter::IncludeOTC => &self.parameters().include_otc,
+            Parameter::Order => &self.parameters().order,
+            Parameter::ContractType => &self.parameters().contract_type,
+            Parameter::Sortv3 => &self.parameters().sortv3,
+            Parameter::StrikePrice => &self.parameters().strike_price,
+        };
+        if o.is_some() {
+            return o;
+        }
+        let o = match parameter {
+            Parameter::Adjusted => &self.parameters().adjusted,
+            Parameter::Sort => &self.parameters().sort,
+            Parameter::Limit => &self.parameters().limit,
+            Parameter::Timespan => &self.parameters().timespan,
+            Parameter::Multiplier => &self.parameters().multiplier,
+            Parameter::IncludeOTC => &self.parameters().include_otc,
+            Parameter::Order => &self.parameters().order,
+            Parameter::ContractType => &self.parameters().contract_type,
+            Parameter::Sortv3 => &self.parameters().sortv3,
+            Parameter::StrikePrice => &self.parameters().strike_price,
+            Parameter::Ticker => ,
+            Parameter::Date => &self.parameters().date,
+            Parameter::From => &self.parameters().from,
+            Parameter::To => &self.parameters().to,
+            Parameter::OptionsTicker => &self.parameters().ticker,
+            Parameter::Timestamp => &self.parameters().timestamp,
+        };
+        o
+    }
+
     fn check_parameters(&self) -> Result<(), ErrorCode> {
         if let Err(check) = self.verify_api_key() {
             return Err(check);
         }
-        let mut hm: HashMap<&Parameter, Box<dyn for<'a> Fn(&'a _, bool) -> Result<(), ErrorCode>>> = HashMap::new();
-            hm.insert(&Parameter::Ticker, Box::new(Self::verify_ticker));
         for parameter in Self::PARAMETERS {
-            if let Err(check) = hm.get(&parameter.parameter).unwrap()(self, parameter.required) {
-                return Err(check);
+            if let Err(ec) = &parameter.verify(self.get_parameter(parameter.parameter)) {
+                return Err(ec.clone());
             }
             match parameter.parameter {
                 Parameter::Ticker => {

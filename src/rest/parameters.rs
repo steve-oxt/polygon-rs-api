@@ -1,9 +1,10 @@
+use crate::ErrorCode;
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Parameter {
-    Ticker(String),
+    Ticker,
     Date,
     Adjusted,
     Sort,
@@ -25,12 +26,15 @@ pub enum Parameter {
 pub struct ParameterRequirment {
     pub required: bool,
     pub parameter: Parameter,
-   
+    pub error: ErrorCode,
 }
 
 impl ParameterRequirment {
-    pub fn verify(&self) {
-
+    pub fn verify<T>(&self, val: Option<T>) -> Result<(), ErrorCode> {
+        match val {
+            Some(_) => Ok(()),
+            None => Err(self.error),
+        }
     }
 }
 

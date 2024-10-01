@@ -1,8 +1,5 @@
 use crate::{ErrorCode, Parameter, ParameterRequirment, Parameters, Request};
-pub struct Attribute {
-    pub regex: &'static str,
-    pub name: &'static str,
-}
+
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug, Default)]
 pub struct Daily {
@@ -27,7 +24,6 @@ impl Daily {
         &Attribute {
             regex: "\"(status)\":(.*?)(,|})",
             name: "status",
-            func: Box::new(Self::verify_ticker),
         },
         &Attribute {
             regex: "\"(symbol)\":(.*?)(,|})",

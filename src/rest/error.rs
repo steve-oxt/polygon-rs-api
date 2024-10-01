@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Copy)]
 pub enum ErrorCode {
     TickerError,
     OptionsTickerError,
