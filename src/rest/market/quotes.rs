@@ -1,4 +1,7 @@
-use crate::{ErrorCode, Order, Parameter, ParameterRequirment, Parameters, Request, Sortv3};
+use crate::{
+    rest::parameters::TickerTypes, ErrorCode, Order, Parameter, ParameterRequirment, Parameters,
+    Request, Sortv3,
+};
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug, Default)]
 pub struct Quotes {
@@ -39,7 +42,6 @@ impl Quotes {
         limit: Option<u16>,
         order: Option<Order>,
     ) {
-        
         let ts = if to.is_some() || from.is_some() {
             None
         } else {
@@ -102,10 +104,9 @@ impl Request for Quotes {
     }
 
     fn set_url(&mut self) -> Result<(), ErrorCode> {
-        if let Err(check) = self.check_parameters() {
-            return Err(check);
-        }
-        if let Err(check) = self.verify_to_from() {
+        if let Err(check) =
+            self.check_parameters(&TickerTypes::set(true, true, false, false, false))
+        {
             return Err(check);
         }
         self.quotes_url = String::from(format!(

@@ -1,4 +1,6 @@
-use crate::{ErrorCode, Parameter, ParameterRequirment, Parameters, Request, Sort, Timespan};
+use crate::{
+    ErrorCode, Parameter, ParameterRequirment, Parameters, Request, Sort, TickerTypes, Timespan,
+};
 
 #[derive(serde::Deserialize, Clone, Debug, Default)]
 pub struct Aggregates {
@@ -102,10 +104,7 @@ impl Request for Aggregates {
     }
 
     fn set_url(&mut self) -> Result<(), ErrorCode> {
-        if let Err(check) = self.check_parameters() {
-            return Err(check);
-        }
-        if let Err(check) = self.verify_to_from() {
+        if let Err(check) = self.check_parameters(&TickerTypes::all()) {
             return Err(check);
         }
         if self.next_url != "" {

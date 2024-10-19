@@ -1,12 +1,12 @@
 pub mod rest;
-pub mod web_socket;
 pub mod tools;
+pub mod web_socket;
 
 use crate::rest::{
     error::ErrorCode,
     parameters::{
-        ContractStyle, ContractType, Order, Parameter, ParameterRequirment, Parameters, Sort,
-        Sortv3, Timeframe, Timespan,
+        ContractStyle, ContractType, Direction, Order, Parameter, ParameterRequirment, Parameters,
+        Sort, Sortv3, TickerTypes, Timeframe, Timespan,
     },
     Request,
 };

@@ -1,4 +1,4 @@
-use crate::{ErrorCode, Parameter, ParameterRequirment, Parameters, Request};
+use crate::{ErrorCode, Parameter, ParameterRequirment, Parameters, Request, TickerTypes};
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug, Default)]
 pub struct Daily {
@@ -63,7 +63,8 @@ impl Request for Daily {
     }
 
     fn set_url(&mut self) -> Result<(), ErrorCode> {
-        if let Err(check) = self.check_parameters() {
+        if let Err(check) = self.check_parameters(&TickerTypes::set(true, true, false, false, true))
+        {
             return Err(check);
         }
         self.daily_url = String::from(format!(

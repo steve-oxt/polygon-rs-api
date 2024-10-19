@@ -1,6 +1,7 @@
 use crate::{
-    rest::parameters::Sortv3, ContractStyle, ContractType, ErrorCode, Order, Parameter,
-    ParameterRequirment, Parameters, Request, Timeframe,
+    rest::parameters::{Sortv3, TickerTypes},
+    ContractStyle, ContractType, ErrorCode, Order, Parameter, ParameterRequirment, Parameters,
+    Request, Timeframe,
 };
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug, Default)]
@@ -95,7 +96,7 @@ impl Chain {
     pub fn set_parameters(
         &mut self,
         api_key: String,
-        ticker: Option<String>,
+        underlying_asset: String,
         date: Option<String>,
         from: Option<String>,
         to: Option<String>,
@@ -107,14 +108,19 @@ impl Chain {
         limit: Option<u16>,
         sort: Option<Sortv3>,
     ) {
-        let ts = if to.is_some() || from.is_some() {
+        let ts = if from.is_some() || from.is_some() {
             None
         } else {
             date
         };
+        let sp = if strike_price_from.is_some() || strike_price_to.is_some() {
+            None
+        } else {
+            strike_price
+        };
         self.chain_parameters = Parameters {
             api_key: api_key,
-            ticker: ticker,
+            underlying_asset: Some(underlying_asset),
             date: ts,
             from: from,
             to: to,
@@ -122,7 +128,7 @@ impl Chain {
             order: order,
             limit: limit,
             sortv3: sort,
-            strike_price: strike_price,
+            strike_price: sp,
             strike_price_from: strike_price_from,
             strike_price_to: strike_price_to,
             ..Parameters::default()
@@ -136,11 +142,19 @@ impl Request for Chain {
     const PARAMETERS: &'static [&'static ParameterRequirment] = &[
         &ParameterRequirment {
             required: true,
-            parameter: Parameter::Ticker,
+            parameter: Parameter::UnderlyingAsset,
         },
         &ParameterRequirment {
             required: false,
             parameter: Parameter::StrikePrice,
+        },
+        &ParameterRequirment {
+            required: false,
+            parameter: Parameter::StrikePriceFrom,
+        },
+        &ParameterRequirment {
+            required: false,
+            parameter: Parameter::StrikePriceTo,
         },
         &ParameterRequirment {
             required: false,
@@ -181,10 +195,7 @@ impl Request for Chain {
     }
 
     fn set_url(&mut self) -> Result<(), ErrorCode> {
-        if let Err(check) = self.check_parameters() {
-            return Err(check);
-        }
-        if let Err(check) = self.verify_to_from() {
+        if let Err(check) = self.check_parameters(&TickerTypes::options()) {
             return Err(check);
         }
         self.chain_url = String::from(format!(
@@ -192,7 +203,7 @@ impl Request for Chain {
             Self::BASE_URL,
             Self::VERSION,
             Self::CALL,
-            self.parameters().clone().ticker.unwrap(),
+            self.parameters().clone().underlying_asset.unwrap(),
             if let Some(strike_price) = self.parameters().clone().strike_price {
                 format!("strike_price={}&", strike_price)
             } else {

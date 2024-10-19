@@ -1,4 +1,6 @@
-use crate::{ErrorCode, Parameter, ParameterRequirment, Parameters, Request};
+use crate::{
+    rest::parameters::TickerTypes, ErrorCode, Parameter, ParameterRequirment, Parameters, Request,
+};
 
 #[derive(serde::Deserialize, Clone, Debug, Default)]
 pub struct LastTrade {
@@ -53,7 +55,9 @@ impl Request for LastTrade {
     }
 
     fn set_url(&mut self) -> Result<(), ErrorCode> {
-        if let Err(check) = self.check_parameters() {
+        if let Err(check) =
+            self.check_parameters(&TickerTypes::set(true, true, false, false, false))
+        {
             return Err(check);
         }
         self.last_trade_url = String::from(format!(

@@ -29,6 +29,11 @@ pub enum ErrorCode {
     JSONParseError,
     StrikePriceNotSet,
     WrongParameterType,
+    TickerNotValidForAPICall,
+    TickerTypeeNotValidForAPICall,
+    TickersNotSet,
+    UnderlyingAssetNotSet,
+    StrikePriceToError,
 }
 
 impl fmt::Display for ErrorCode {
@@ -61,7 +66,11 @@ impl fmt::Display for ErrorCode {
             ErrorCode::DateToError => f.write_str("There is an issue with the to date"),
             ErrorCode::DateFromError => f.write_str("There is an issue with the from date"),
             ErrorCode::WrongParameterType => f.write_str("There is an issue with the parameter type"),
+            ErrorCode::TickerNotValidForAPICall => f.write_str("This Ticker can not be used for this API Call"),
+            ErrorCode::TickerTypeeNotValidForAPICall => f.write_str("This Ticker Type can not be used for this API Call"),
+            ErrorCode::TickersNotSet => f.write_str("There is no tickers set"),
+            ErrorCode::UnderlyingAssetNotSet => f.write_str("There is no underlying asset set"),
+            ErrorCode::StrikePriceToError => f.write_str("There is an issue with the strike price to"),
         }
     }
 }
-
